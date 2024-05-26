@@ -2,27 +2,22 @@ require('./Config')
 const pino = require('pino')
 const { Boom } = require('@hapi/boom')
 const fs = require('fs')
-const fss = require('fs-extra')
 const moment = require('moment-timezone');
 const chalk = require('chalk')
 const FileType = require('file-type')
 const path = require('path')
+const yargs = require('yargs/yargs')
+const _ = require('lodash')
 const axios = require('axios')
 const PhoneNumber = require('awesome-phonenumber')
-const { exec, execSync } = require('child_process');
-const Config = require('./Config.js');
 const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./Gallery/lib/exif')
 const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await, sleep, reSize } = require('./Gallery/lib/myfunc')
-const { default: MariaConnect, delay, PHONENUMBER_MCC, makeCacheableSignalKeyStore, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, generateForwardMessageContent, prepareWAMessageMedia, generateWAMessageFromContent, generateMessageID, downloadContentFromMessage, makeInMemoryStore, jidDecode, proto, Browsers, getAggregateVotesInPollMessage, extractMessageContent, getContentType, normalizeMessageContent, downloadMediaMessage, getBinaryNodeChild, WAMediaUpload, getBinaryNodeChildren, generateWAMessage, WA_DEFAULT_EPHEMERAL} = require("@whiskeysockets/baileys")
+const { default: MariaConnect, delay, PHONENUMBER_MCC, makeCacheableSignalKeyStore, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, generateForwardMessageContent, prepareWAMessageMedia, generateWAMessageFromContent, generateMessageID, downloadContentFromMessage, makeInMemoryStore, jidDecode, proto } = require("@whiskeysockets/baileys")
 const NodeCache = require("node-cache")
 const Pino = require("pino")
 const readline = require("readline")
 const { parsePhoneNumber } = require("libphonenumber-js")
 const makeWASocket = require("@whiskeysockets/baileys").default
-var sessionFolderPath = path.join(__dirname, '/session');
-var sessionPath = path.join(sessionFolderPath, '/creds.json'); 
-console.log(Config.sessionId);
-Dec_Sess();
 
 const store = makeInMemoryStore({
     logger: pino().child({
@@ -31,23 +26,15 @@ const store = makeInMemoryStore({
     })
 })
 
-async function Dec_Sess(){
-execSync('rm -rf ' + sessionPath);
-exec('rm -r ' + sessionPath);
-exec('mkdir ' + sessionFolderPath)
-let code = Config.sessionId.replace(/_M_A_R_I_A_/g, "");
-let code2 = Buffer.from(code, "base64").toString("utf-8")
-let id = code2.replace(/_M_A_R_I_A_/g, "");
-let id2 = Buffer.from(id, "base64").toString("utf-8")
-if (!fs.existsSync(sessionPath)) {
-    if(id2.length<30){
-    const axios = require('axios');
-    let { data } = await axios.get('https://paste.c-net.org/'+id2)
- //   console.log(data)
-    await fs.writeFileSync(sessionPath, JSON.stringify(data))
-    }
-}
-}
+let phoneNumber = "4915678394727"
+let owner = JSON.parse(fs.readFileSync('./Gallery/database/owner.json'))
+
+
+const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
+const useMobile = process.argv.includes("--mobile")
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+const question = (text) => new Promise((resolve) => rl.question(text, resolve))
          
 async function startMaria() {
 await delay(3000);
