@@ -41,15 +41,29 @@ await delay(3000);
 await delay(2000);
 //------------------------------------------------------
 let { version, isLatest } = await fetchLatestBaileysVersion()
-const {  state, saveCreds } =await useMultiFileAuthState(`./session`)
+const {  state,saveCreds } =await useMultiFileAuthState(`./session`)
     const msgRetryCounterCache = new NodeCache() // for retry message, "waiting message"
     const Maria = makeWASocket({
-      logger: pino({ level: 'silent' }),
-      printQRInTerminal: true, // popping up QR in terminal log
-      browser: Browsers.ubuntu('Firefox'), // for this issues https://github.com/WhiskeySockets/Baileys/issues/328
-      auth: state,
-      version
-   });
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: true, // popping up QR in terminal log
+      mobile: useMobile, // mobile api (prone to bans)
+      browser: ['Chrome (Linux)', '', ''], // for this issues https://github.com/WhiskeySockets/Baileys/issues/328
+     auth: {
+         creds: state.creds,
+         keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
+      },
+      browser: ['Chrome (Linux)', '', ''], // for this issues https://github.com/WhiskeySockets/Baileys/issues/328
+      markOnlineOnConnect: true, // set false for offline
+      generateHighQualityLinkPreview: true, // make high preview link
+      getMessage: async (key) => {
+         let jid = jidNormalizedUser(key.remoteJid)
+         let msg = await store.loadMessage(jid, key.id)
+
+         return msg?.message || ""
+      },
+      msgRetryCounterCache, // Resolve waiting messages
+      defaultQueryTimeoutMs: undefined, // for this issues https://github.com/WhiskeySockets/Baileys/issues/276
+   })
    
    store.bind(Maria.ev)
 
